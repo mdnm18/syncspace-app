@@ -36,7 +36,6 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
       >
         {/* Mobile View */}
         <div className="sm:hidden flex items-center justify-between">
-          <Clock darkMode={darkMode} />
           <motion.div
             className="cursor-pointer"
             onClick={() => {
@@ -46,6 +45,7 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
           >
             <img src={logo} alt="SyncSpace Logo" className="h-12 w-12" />
           </motion.div>
+          <Clock darkMode={darkMode} />
           <motion.button
             whileHover={{ scale: 1.3 }}
             whileTap={{ scale: 1 }}
