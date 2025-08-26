@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 // This component displays the current time and date, updating every second.
 const Clock = ({ darkMode }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // useEffect to set up an interval that updates the time every second
@@ -31,7 +33,13 @@ const Clock = ({ darkMode }) => {
   };
 
   return (
-    <div className={darkMode ? "text-slate-300" : "text-slate-700"}>
+    // 3. Added onClick handler and cursor-pointer class
+    <div
+      className={`cursor-pointer ${
+        darkMode ? "text-slate-300" : "text-slate-700"
+      }`}
+      onClick={triggerHapticFeedback}
+    >
       <div className="font-bold text-lg text-center">
         {currentTime.toLocaleTimeString("en-US", timeOptions)}
       </div>

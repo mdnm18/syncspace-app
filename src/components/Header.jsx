@@ -1,12 +1,25 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Moon, Sun } from "lucide-react";
-import { TypeAnimation } from "react-type-animation"; // Import the new component
+import { TypeAnimation } from "react-type-animation";
 import logo from "../assets/logo.png";
 import Clock from "./Clock";
 import { navItems } from "../constants/data";
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
+
+  const handleThemeClick = () => {
+    triggerHapticFeedback();
+    setDarkMode(!darkMode);
+  };
+
+  const handleNavClick = (pageName) => {
+    triggerHapticFeedback();
+    setActivePage(pageName);
+  };
+
   return (
     <motion.nav
       initial={{ y: -100, opacity: 0 }}
@@ -23,19 +36,20 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
       >
         {/* Mobile View */}
         <div className="sm:hidden flex items-center justify-between">
+          <Clock darkMode={darkMode} />
           <motion.div
             className="cursor-pointer"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={() => {
+              triggerHapticFeedback();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
           >
             <img src={logo} alt="SyncSpace Logo" className="h-12 w-12" />
           </motion.div>
-
-          <Clock darkMode={darkMode} />
-
           <motion.button
             whileHover={{ scale: 1.3 }}
             whileTap={{ scale: 1 }}
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={handleThemeClick} // 3. Use the handler
             className={`p-2 rounded-full ${
               darkMode ? "bg-slate-700/50" : "bg-white/50"
             } transition-all`}
@@ -50,17 +64,16 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
           <motion.div
             whileHover={{ scale: 1.2 }}
             className="flex items-center space-x-2 cursor-pointer"
-            onClick={() => setActivePage(navItems[0].name)}
+            onClick={() => handleNavClick(navItems[0].name)} // 3. Use the handler
           >
             <img src={logo} alt="SyncSpace Logo" className="h-12 w-12" />
             <span className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              {/* *** NEW TYPING ANIMATION FOR THE HEADER *** */}
               <TypeAnimation
-                sequence={["SyncSpace", 2000]} // Types 'SyncSpace' once and stops
+                sequence={["SyncSpace", 2000]}
                 wrapper="span"
-                speed={30}
+                speed={50}
                 cursor={true}
-                repeat={0} // Setting repeat to 0 makes it run only once
+                repeat={0}
               />
             </span>
           </motion.div>
@@ -73,7 +86,7 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
             {navItems.map((item) => (
               <div key={item.name} className="relative">
                 <motion.button
-                  onClick={() => setActivePage(item.name)}
+                  onClick={() => handleNavClick(item.name)} // 3. Use the handler
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-full text-lg font-bold transition-colors relative z-10 ${
@@ -109,7 +122,7 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
           <motion.button
             whileHover={{ scale: 1.3 }}
             whileTap={{ scale: 1 }}
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={handleThemeClick} // 3. Use the handler
             className={`p-2 rounded-full ${
               darkMode ? "bg-slate-700/50" : "bg-white/50"
             } transition-all`}

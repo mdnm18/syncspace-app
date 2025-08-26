@@ -29,17 +29,16 @@ function Particles({ count, darkMode }) {
   // Animation loop that runs on every frame
   useFrame((state) => {
     const { clock } = state;
-    // Gently rotate the entire particle system
-    points.current.rotation.y = clock.getElapsedTime() * 0.05;
-    points.current.rotation.x = clock.getElapsedTime() * 0.02;
+    // *** CHANGE: Further reduced rotation speed for a calmer effect ***
+    points.current.rotation.y = clock.getElapsedTime() * 0.01; // Slower rotation
+    points.current.rotation.x = clock.getElapsedTime() * 0.005; // Slower rotation
   });
 
   return (
     <Points ref={points} positions={particlesPosition} stride={3}>
       <PointMaterial
         transparent
-        // *** COLOR CHANGE: Particles now match your theme ***
-        color={darkMode ? "#a78bfa" : "#818cf8"} // violet-400 for dark, indigo-400 for light
+        color={darkMode ? "#a78bfa" : "#818cf8"}
         size={0.015}
         sizeAttenuation={true}
         depthWrite={false}
@@ -52,19 +51,16 @@ function Particles({ count, darkMode }) {
 const DynamicBackground = ({ darkMode }) => {
   return (
     <div className="fixed inset-0 -z-10">
-      <Canvas camera={{ position: [0, 0, 2.5] }}>
-        {/* Ambient light to softly illuminate the scene */}
-        <ambientLight intensity={1} />
-
-        {/* The particle system now receives the darkMode prop */}
+      <Canvas camera={{ position: [0, 0, 0.5] }}>
+        <ambientLight intensity={0.5} />
         <Particles count={5000} darkMode={darkMode} />
 
-        {/* A subtle grid to represent the "digital world" */}
         <gridHelper
-          args={[100, 100]}
+          // *** CHANGE: Reduced grid density to make it more subtle ***
+          args={[50, 50]} // Was [100, 100]
           rotation={[Math.PI / 2, 0, 0]}
           material-color={darkMode ? "#4f46e5" : "#a5b4fc"}
-          material-opacity={0.15}
+          material-opacity={0.1} // Also reduced opacity slightly
           material-transparent={true}
         />
       </Canvas>

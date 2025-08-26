@@ -6,28 +6,41 @@ import { Autoplay, EffectCards } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-cards";
 import { sampleNews } from "../constants/data"; // Import fallback news
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 const NewsSection = ({ darkMode, setExpandedCard }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
   const [techNews, setTechNews] = useState([]);
   const newsIntervalRef = useRef(null);
 
-  // Get API key from environment variables
-  const API_KEY = import.meta.env.VITE_NEWS_API_KEY;
+  // Securely access the GNews API key from the .env file
+  const API_KEY = import.meta.env.VITE_GNEWS_API_KEY;
+
+  const handleCardClick = (article) => {
+    triggerHapticFeedback(); // 3. Trigger feedback on click
+    setExpandedCard({ type: "news", data: article });
+  };
 
   const fetchNews = async () => {
-    // Check if API key is available
     if (!API_KEY) {
-      console.warn("News API key not found. Using sample data.");
+      console.error("GNews API key not found. Using sample data.");
       setTechNews(sampleNews);
       return;
     }
 
-    const url = `https://newsapi.org/v2/top-headlines?country=us&category=technology&apiKey=${API_KEY}`;
+    const url = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&country=us&max=10&apikey=${API_KEY}`;
+
     try {
       const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch news");
+      if (!response.ok) throw new Error("Failed to fetch news from GNews");
       const data = await response.json();
-      setTechNews(data.articles.filter((article) => article.urlToImage));
+
+      const formattedArticles = data.articles.map((article) => ({
+        ...article,
+        urlToImage: article.image,
+      }));
+
+      setTechNews(formattedArticles.filter((article) => article.urlToImage));
     } catch (error) {
       console.error("Failed to fetch news:", error);
       setTechNews(sampleNews);
@@ -36,7 +49,7 @@ const NewsSection = ({ darkMode, setExpandedCard }) => {
 
   useEffect(() => {
     fetchNews();
-    newsIntervalRef.current = setInterval(fetchNews, 120000); // Refresh every 2 minutes
+    newsIntervalRef.current = setInterval(fetchNews, 1800000); // Refresh every 30 minutes
     return () => clearInterval(newsIntervalRef.current);
   }, []);
 
@@ -48,10 +61,9 @@ const NewsSection = ({ darkMode, setExpandedCard }) => {
       viewport={{ once: true, amount: 0.5 }}
       className="py-20"
     >
-      {/* FIXED: Match QuoteSection structure exactly */}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto h-full">
         <h2
-          className={`text-4xl font-bold text-center mb-12 px-4 ${
+          className={`text-4xl font-bold text-center mb-12 ${
             darkMode ? "text-white" : "text-slate-800"
           }`}
         >
@@ -59,32 +71,27 @@ const NewsSection = ({ darkMode, setExpandedCard }) => {
           Tech News
         </h2>
 
-        {/* FIXED: Use same layout structure as QuoteSection - Increased height for full image visibility */}
-        <div className="relative h-[550px] flex items-center justify-center px-4">
+        <div className="flex justify-center">
           <Swiper
             effect="cards"
             grabCursor={true}
             modules={[EffectCards, Autoplay]}
             autoplay={{ delay: 5000, disableOnInteraction: false }}
-            // FIXED: Remove all width constraints - let it be truly full width
             className="w-full h-full"
           >
             {techNews.map((article, index) => (
               <SwiperSlide key={index}>
                 <motion.div
                   whileHover={{ scale: 1.02 }}
-                  onClick={() =>
-                    setExpandedCard({ type: "news", data: article })
-                  }
-                  // FIXED: Use absolute positioning like QuoteSection
-                  className={`absolute w-full h-full rounded-3xl overflow-hidden backdrop-blur-xl cursor-pointer ${
+                  onClick={() => handleCardClick(article)} // 4. Use the new handler
+                  className={`rounded-3xl overflow-hidden backdrop-blur-2xl cursor-pointer ${
                     darkMode
-                      ? "bg-slate-900/80 border-slate-700/50"
-                      : "bg-white/80 border-white/50"
-                  } border shadow-2xl`}
+                      ? "bg-slate-800/90 border-slate-700/50"
+                      : "bg-white/90 border-white/50"
+                  } border shadow-xl h-96 rounded-3xl`}
                 >
                   <div
-                    className="h-3/5 bg-cover bg-center relative"
+                    className="h-2/3 bg-cover bg-center relative"
                     style={{ backgroundImage: `url(${article.urlToImage})` }}
                   >
                     <div className="absolute inset-0 bg-black/20" />
@@ -95,8 +102,8 @@ const NewsSection = ({ darkMode, setExpandedCard }) => {
                     </div>
                   </div>
                   <div
-                    className={`p-6 h-1.5/5 ${
-                      darkMode ? "bg-slate-900/80" : "bg-white"
+                    className={`p-6 h-2/3 ${
+                      darkMode ? "bg-slate-800" : "bg-white"
                     }`}
                   >
                     <h3

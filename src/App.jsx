@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronUp, Quote, X } from "lucide-react";
 
@@ -15,8 +15,8 @@ import DynamicBackground from "./components/DynamicBackground";
 
 // Import Hooks & Data
 import useDarkMode from "./hooks/useDarkMode";
-import useIsMobile from "./hooks/useIsMobile";
-import useScrollSpy from "./hooks/useScrollSpy";
+import useIsMobile from "./hooks/useIsMobile"; // Import the new hook
+import useScrollSpy from "./hooks/useScrollSpy"; // Import the new hook
 import { navItems } from "./constants/data";
 
 function App() {
@@ -155,9 +155,7 @@ function App() {
         darkMode ? "dark" : ""
       }`}
     >
-      {/* *** BUG FIX: Removed background colors from this div *** */}
       <div className="relative">
-        {/* The dynamic background is always present */}
         <DynamicBackground darkMode={darkMode} />
 
         <AnimatePresence>

@@ -2,9 +2,11 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Github, Linkedin, Mail } from "lucide-react";
 import logo from "../assets/logo.png"; // Importing the logo
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 // The Footer component receives the darkMode state as a prop
 const Footer = ({ darkMode }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
   // Array of social media links for easy mapping
   const socialLinks = [
     {
@@ -51,6 +53,7 @@ const Footer = ({ darkMode }) => {
                 rel="noopener noreferrer"
                 whileHover={{ scale: 1.5, y: -4 }}
                 aria-label={`Visit my ${link.label}`}
+                onClick={triggerHapticFeedback} // 3. Add the onClick handler
                 className={`p-3 rounded-full ${
                   darkMode
                     ? "bg-slate-800 hover:bg-purple-700"

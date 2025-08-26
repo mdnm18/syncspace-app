@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { moods } from "../constants/data"; // Import moods data
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 // The MoodTracker component receives the darkMode state as a prop
 const MoodTracker = ({ darkMode }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
   const [selectedMood, setSelectedMood] = useState(null);
   const [moodStats, setMoodStats] = useState({});
 
@@ -53,6 +55,7 @@ const MoodTracker = ({ darkMode }) => {
 
   // Function to log a new mood
   const logMood = (mood) => {
+    triggerHapticFeedback(); // 3. Trigger feedback on click
     setSelectedMood(mood);
     const today = new Date().toDateString();
 

@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Quote } from "lucide-react";
 import { sampleQuotes } from "../constants/data";
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 const QuoteSection = ({ darkMode, setExpandedCard }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
   const [currentQuote, setCurrentQuote] = useState(null);
   const quoteIntervalRef = useRef(null);
 
@@ -30,6 +32,12 @@ const QuoteSection = ({ darkMode, setExpandedCard }) => {
     quoteIntervalRef.current = setInterval(fetchQuote, 120000); // Refresh every 2 minutes
     return () => clearInterval(quoteIntervalRef.current);
   }, []);
+
+  // 3. Create a handler function for the click event
+  const handleCardClick = () => {
+    triggerHapticFeedback();
+    setExpandedCard({ type: "quote", data: currentQuote });
+  };
 
   return (
     <motion.section
@@ -58,9 +66,7 @@ const QuoteSection = ({ darkMode, setExpandedCard }) => {
                 exit={{ opacity: 0, rotateY: -90 }}
                 transition={{ duration: 0.6 }}
                 whileHover={{ scale: 1.02, y: -5 }}
-                onClick={() =>
-                  setExpandedCard({ type: "quote", data: currentQuote })
-                }
+                onClick={handleCardClick} // 4. Use the new handler
                 className={`absolute w-full h-full rounded-3xl p-8 backdrop-blur-xl cursor-pointer ${
                   darkMode
                     ? "bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-purple-700/50"

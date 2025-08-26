@@ -2,17 +2,20 @@ import React from "react";
 import { motion } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
 import logo from "../assets/logo.png";
+import useHapticFeedback from "../hooks/useHapticFeedback";
 
 const Loader = ({ darkMode }) => {
   return (
     <motion.div
       key="loader"
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      // *** UPDATED DISSOLVE EXIT ANIMATION ***
+      // *** CHANGE: Added background and blur classes ***
+      className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl ${
+        darkMode ? "bg-slate-900/50" : "bg-blue-50/50"
+      }`}
       exit={{
         opacity: 0,
-        filter: "blur(20px)", // Adds a blur effect as it fades
-        scale: 0.9, // Shrinks slightly
+        filter: "blur(20px)",
+        scale: 0.9,
         transition: { duration: 1, ease: "easeOut" },
       }}
     >

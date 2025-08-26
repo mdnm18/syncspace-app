@@ -1,9 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Brain, Play, Pause } from "lucide-react";
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 // The MindfulMinute component receives the darkMode state as a prop
 const MindfulMinute = ({ darkMode }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
   // State to manage the breathing exercise
   const [isBreathing, setIsBreathing] = useState(false);
   const [breathTimer, setBreathTimer] = useState(60);
@@ -15,11 +17,13 @@ const MindfulMinute = ({ darkMode }) => {
 
   // Function to start the 60-second breathing exercise
   const startBreathingExercise = () => {
+    triggerHapticFeedback(); // Haptic feedback on starting the exercise
     setIsBreathing(true);
     setBreathTimer(60);
 
     // Set up an interval to count down every second
     breathIntervalRef.current = setInterval(() => {
+      triggerHapticFeedback(); // *** NEW: Haptic feedback for every second of the countdown ***
       setBreathTimer((prev) => {
         if (prev <= 1) {
           // When the timer reaches 1, stop the exercise
@@ -34,6 +38,7 @@ const MindfulMinute = ({ darkMode }) => {
 
   // Function to toggle the ambient audio on and off
   const toggleAudio = () => {
+    triggerHapticFeedback(); // Haptic feedback on toggling audio
     if (audioRef.current) {
       if (isAudioPlaying) {
         audioRef.current.pause();

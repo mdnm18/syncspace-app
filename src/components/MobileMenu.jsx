@@ -1,10 +1,19 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { navItems } from "../constants/data"; // Import navItems with icons
+import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
 
 // The MobileMenu is only visible on small screens.
 // It receives the active page and a function to set the active page as props.
 const MobileMenu = ({ activePage, setActivePage, darkMode }) => {
+  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
+
+  // 3. Create a handler function for the click event
+  const handleNavClick = (pageName) => {
+    triggerHapticFeedback();
+    setActivePage(pageName);
+  };
+
   return (
     <motion.div
       // This menu is hidden on medium screens and larger (sm:)
@@ -23,7 +32,7 @@ const MobileMenu = ({ activePage, setActivePage, darkMode }) => {
         {navItems.map((item) => (
           <div key={item.name} className="relative">
             <motion.button
-              onClick={() => setActivePage(item.name)}
+              onClick={() => handleNavClick(item.name)} // 4. Use the new handler
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               className={`p-3 rounded-full transition-colors ${
