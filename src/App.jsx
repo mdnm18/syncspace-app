@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronUp, Quote, X } from "lucide-react";
-
+import { Analytics } from "@vercel/analytics/react";
 // Import Components
 import Header from "./components/Header";
 import Footer from "./components/Footer";
