@@ -74,7 +74,7 @@ const MindfulMinute = ({ darkMode }) => {
             darkMode ? "text-white" : "text-slate-800"
           }`}
         >
-          <Brain className="inline mr-3" />
+          <Brain className="inline mr-2 text-pink-500" />
           Mindful Minute
         </h2>
 

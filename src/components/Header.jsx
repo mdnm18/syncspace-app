@@ -5,10 +5,10 @@ import { TypeAnimation } from "react-type-animation";
 import logo from "../assets/logo.png";
 import Clock from "./Clock";
 import { navItems } from "../constants/data";
-import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
+import useHapticFeedback from "../hooks/useHapticFeedback";
 
 const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
-  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
+  const triggerHapticFeedback = useHapticFeedback();
 
   const handleThemeClick = () => {
     triggerHapticFeedback();
@@ -49,7 +49,7 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
           <motion.button
             whileHover={{ scale: 1.3 }}
             whileTap={{ scale: 1 }}
-            onClick={handleThemeClick} // 3. Use the handler
+            onClick={handleThemeClick}
             className={`p-2 rounded-full ${
               darkMode ? "bg-slate-700/50" : "bg-white/50"
             } transition-all`}
@@ -64,7 +64,7 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
           <motion.div
             whileHover={{ scale: 1.2 }}
             className="flex items-center space-x-2 cursor-pointer"
-            onClick={() => handleNavClick(navItems[0].name)} // 3. Use the handler
+            onClick={() => handleNavClick(navItems[0].name)}
           >
             <img src={logo} alt="SyncSpace Logo" className="h-12 w-12" />
             <span className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -79,22 +79,22 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
           </motion.div>
 
           <div
-            className={`flex items-center space-x-2 p-1 rounded-full ${
+            className={`flex items-center space-x-1 p-1 rounded-full ${
               darkMode ? "bg-slate-900/50" : "bg-slate-200/50"
             }`}
           >
             {navItems.map((item) => (
               <div key={item.name} className="relative">
                 <motion.button
-                  onClick={() => handleNavClick(item.name)} // 3. Use the handler
+                  onClick={() => handleNavClick(item.name)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-full text-lg font-bold transition-colors relative z-10 ${
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-full text-md font-bold transition-colors relative z-10 ${
                     activePage === item.name ? "" : "hover:text-blue-500"
                   }`}
                 >
                   <item.icon
-                    size={20}
+                    size={18}
                     className={`${
                       activePage === item.name ? "text-white" : ""
                     }`}
@@ -122,7 +122,7 @@ const Header = ({ darkMode, setDarkMode, activePage, setActivePage }) => {
           <motion.button
             whileHover={{ scale: 1.3 }}
             whileTap={{ scale: 1 }}
-            onClick={handleThemeClick} // 3. Use the handler
+            onClick={handleThemeClick}
             className={`p-2 rounded-full ${
               darkMode ? "bg-slate-700/50" : "bg-white/50"
             } transition-all`}

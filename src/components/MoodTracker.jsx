@@ -1,36 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Heart } from "lucide-react";
-import { moods } from "../constants/data"; // Import moods data
-import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
+import { moods } from "../constants/data";
+import useHapticFeedback from "../hooks/useHapticFeedback";
+import useLocalStorage from "../hooks/useLocalStorage";
 
-// The MoodTracker component receives the darkMode state as a prop
 const MoodTracker = ({ darkMode }) => {
-  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
+  const triggerHapticFeedback = useHapticFeedback();
   const [selectedMood, setSelectedMood] = useState(null);
   const [moodStats, setMoodStats] = useState({});
+  const [journalText, setJournalText] = useState("");
+  const [showJournal, setShowJournal] = useState(false);
 
-  // Function to load and calculate mood statistics from localStorage
+  const [journalEntries, setJournalEntries] = useLocalStorage(
+    "journal_entries",
+    []
+  );
+
   const loadMoodStats = () => {
     try {
       const storedMoods = JSON.parse(
         localStorage.getItem("syncspace_moods") || "{}"
       );
       const stats = {};
-
-      // Initialize stats for all moods to 0
       moods.forEach((mood) => {
         stats[mood.label] = 0;
       });
-
-      // Get the dates for the last 7 days
       const last7Days = Array.from({ length: 7 }, (_, i) => {
         const date = new Date();
         date.setDate(date.getDate() - i);
         return date.toDateString();
       });
-
-      // Count moods logged in the last 7 days
       last7Days.forEach((day) => {
         if (storedMoods[day]) {
           storedMoods[day].forEach((moodEntry) => {
@@ -40,7 +40,6 @@ const MoodTracker = ({ darkMode }) => {
           });
         }
       });
-
       setMoodStats(stats);
     } catch (error) {
       console.error("Failed to parse moods from localStorage", error);
@@ -48,16 +47,26 @@ const MoodTracker = ({ darkMode }) => {
     }
   };
 
-  // useEffect to load stats when the component first mounts
   useEffect(() => {
     loadMoodStats();
   }, []);
 
-  // Function to log a new mood
-  const logMood = (mood) => {
-    triggerHapticFeedback(); // 3. Trigger feedback on click
+  const handleMoodSelect = (mood) => {
+    triggerHapticFeedback();
     setSelectedMood(mood);
+    setShowJournal(true);
+  };
+
+  const handleSaveEntry = () => {
+    triggerHapticFeedback();
+    if (!selectedMood) return;
+
     const today = new Date().toDateString();
+    const newEntry = {
+      ...selectedMood,
+      journal: journalText,
+      timestamp: new Date().toISOString(),
+    };
 
     try {
       const allMoods = JSON.parse(
@@ -66,18 +75,20 @@ const MoodTracker = ({ darkMode }) => {
       if (!allMoods[today]) {
         allMoods[today] = [];
       }
-      allMoods[today].push({ ...mood, timestamp: Date.now() });
+      allMoods[today].push(selectedMood);
       localStorage.setItem("syncspace_moods", JSON.stringify(allMoods));
     } catch (error) {
-      console.error("Failed to save mood to localStorage", error);
+      console.error("Failed to save mood", error);
     }
 
-    // Reload stats and reset the visual selection
+    setJournalEntries((prevEntries) => [...prevEntries, newEntry]);
+
     loadMoodStats();
-    setTimeout(() => setSelectedMood(null), 2000);
+    setJournalText("");
+    setShowJournal(false);
+    setSelectedMood(null);
   };
 
-  // Calculate the maximum count for scaling the bars correctly
   const maxCount = Math.max(...Object.values(moodStats), 1);
 
   return (
@@ -94,10 +105,9 @@ const MoodTracker = ({ darkMode }) => {
             darkMode ? "text-white" : "text-slate-800"
           }`}
         >
-          <Heart className="inline mr-3" />
+          <Heart className="inline mr-2 text-red-500" />
           Mood Tracker
         </h2>
-
         <div
           className={`rounded-3xl p-8 backdrop-blur-xl ${
             darkMode
@@ -119,7 +129,7 @@ const MoodTracker = ({ darkMode }) => {
                   key={mood.label}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => logMood(mood)}
+                  onClick={() => handleMoodSelect(mood)}
                   className={`p-4 rounded-2xl backdrop-blur-sm transition-all relative w-24 h-24 flex flex-col items-center justify-center ${
                     selectedMood?.label === mood.label
                       ? `bg-gradient-to-r ${mood.color} text-white shadow-lg`
@@ -130,21 +140,53 @@ const MoodTracker = ({ darkMode }) => {
                 >
                   <div className="text-3xl mb-2">{mood.emoji}</div>
                   <div className="text-sm font-medium">{mood.label}</div>
-                  {selectedMood?.label === mood.label && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                    >
-                      ✓
-                    </motion.div>
-                  )}
                 </motion.button>
               ))}
             </div>
           </div>
 
-          {/* Mood Stats Visualization */}
+          <AnimatePresence>
+            {showJournal && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-8">
+                  <label
+                    htmlFor="journal"
+                    className={`block text-lg font-semibold mb-2 text-center ${
+                      darkMode ? "text-white" : "text-slate-800"
+                    }`}
+                  >
+                    Add a journal entry (optional)
+                  </label>
+                  <textarea
+                    id="journal"
+                    value={journalText}
+                    onChange={(e) => setJournalText(e.target.value)}
+                    placeholder={`A few words about feeling ${selectedMood?.label.toLowerCase()}...`}
+                    className={`w-full p-4 rounded-2xl border transition-colors ${
+                      darkMode
+                        ? "bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400"
+                        : "bg-white/50 border-slate-300 text-slate-800"
+                    }`}
+                    rows="3"
+                  ></textarea>
+                  <motion.button
+                    onClick={handleSaveEntry}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 rounded-full shadow-lg"
+                  >
+                    Save Entry
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="mt-8">
             <h3
               className={`text-xl font-semibold mb-4 text-center ${

@@ -1,11 +1,20 @@
-import { Brain, Quote, Heart, Newspaper } from "lucide-react";
+import {
+  Brain,
+  Quote,
+  Heart,
+  Newspaper,
+  Bookmark,
+  BookOpen,
+} from "lucide-react";
 
-// Navigation items data with icons
+// Navigation items data with icons for all sections
 export const navItems = [
   { name: "Mindful", icon: Brain },
   { name: "Quotes", icon: Quote },
   { name: "Mood", icon: Heart },
   { name: "News", icon: Newspaper },
+  { name: "Favorites", icon: Bookmark },
+  { name: "Journal", icon: BookOpen },
 ];
 
 // Moods data for the Mood Tracker component
@@ -27,14 +36,9 @@ export const sampleQuotes = [
     text: "Innovation distinguishes between a leader and a follower.",
     author: "Steve Jobs",
   },
-  { text: "Stay hungry, stay foolish.", author: "Steve Jobs" },
   {
     text: "The future belongs to those who believe in the beauty of their dreams.",
     author: "Eleanor Roosevelt",
-  },
-  {
-    text: "It is during our darkest moments that we must focus to see the light.",
-    author: "Aristotle",
   },
 ];
 
@@ -43,7 +47,7 @@ export const sampleNews = [
   {
     title: "Revolutionary AI Breakthrough in 2024",
     description:
-      "Scientists achieve unprecedented advances in artificial intelligence, opening new possibilities for human-machine collaboration.",
+      "Scientists achieve unprecedented advances in artificial intelligence.",
     urlToImage:
       "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=200&fit=crop",
     source: { name: "Tech Today" },
@@ -52,19 +56,10 @@ export const sampleNews = [
   {
     title: "Quantum Computing Milestone Reached",
     description:
-      "Major tech companies announce significant progress in quantum computing development, promising revolutionary changes.",
+      "Major tech companies announce significant progress in quantum computing.",
     urlToImage:
       "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=200&fit=crop",
     source: { name: "Quantum Weekly" },
-    url: "#",
-  },
-  {
-    title: "Sustainable Tech Innovations Lead 2024",
-    description:
-      "Green technology solutions dominate the tech landscape, focusing on environmental sustainability and clean energy.",
-    urlToImage:
-      "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=400&h=200&fit=crop",
-    source: { name: "Green Tech News" },
     url: "#",
   },
 ];

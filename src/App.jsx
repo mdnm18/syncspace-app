@@ -1,23 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronUp, Quote, X } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
+
 // Import Components
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import MindfulMinute from "./components/MindfulMinute";
-import QuoteSection from "./components/QuoteSection";
-import MoodTracker from "./components/MoodTracker";
-import NewsSection from "./components/NewsSection";
 import MobileMenu from "./components/MobileMenu";
 import Loader from "./components/Loader";
 import DynamicBackground from "./components/DynamicBackground";
 
 // Import Hooks & Data
 import useDarkMode from "./hooks/useDarkMode";
-import useIsMobile from "./hooks/useIsMobile"; // Import the new hook
-import useScrollSpy from "./hooks/useScrollSpy"; // Import the new hook
+import useIsMobile from "./hooks/useIsMobile";
+import useScrollSpy from "./hooks/useScrollSpy";
 import { navItems } from "./constants/data";
+
+// Lazily load all main section components for better performance
+const MindfulMinute = React.lazy(() => import("./components/MindfulMinute"));
+const QuoteSection = React.lazy(() => import("./components/QuoteSection"));
+const MoodTracker = React.lazy(() => import("./components/MoodTracker"));
+const NewsSection = React.lazy(() => import("./components/NewsSection"));
+const Favorites = React.lazy(() => import("./components/Favorites"));
+const Journal = React.lazy(() => import("./components/Journal"));
 
 function App() {
   const [darkMode, setDarkMode] = useDarkMode();
@@ -25,43 +30,123 @@ function App() {
   const [activePage, setActivePage] = useState(navItems[0].name);
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
-  const [isScrolling, setIsScrolling] = useState(false);
+  const [isProgrammaticScroll, setIsProgrammaticScroll] = useState(false);
+  const [componentsLoaded, setComponentsLoaded] = useState(false);
+
+  // Logic for directional mobile page animations
+  const [direction, setDirection] = useState(0);
+  const activePageIndex = navItems.findIndex(
+    (item) => item.name === activePage
+  );
+  const prevPageIndex = useRef(activePageIndex);
+  const scrollTimeoutRef = useRef(null);
+
+  const pageVariants = {
+    enter: (direction) => ({
+      x: direction > 0 ? "100%" : "-100%",
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction) => ({
+      x: direction < 0 ? "100%" : "-100%",
+      opacity: 0,
+    }),
+  };
 
   const sectionIds = navItems.map((item) => item.name.toLowerCase());
-  const activeSection = useScrollSpy(sectionIds, {
-    rootMargin: "-50% 0px -50% 0px",
-  });
 
-  useEffect(() => {
-    if (activeSection && !isMobile && !isScrolling) {
-      setActivePage(activeSection);
+  // Only start scroll spy after components are loaded and not on mobile
+  const activeSection = useScrollSpy(
+    componentsLoaded && !isMobile ? sectionIds : [],
+    {
+      rootMargin: "-10% 0px -70% 0px",
+      threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
     }
-  }, [activeSection, isMobile, isScrolling]);
+  );
 
+  // Set components as loaded after initial loading and a small delay for DOM to settle
+  useEffect(() => {
+    if (!isLoading && !isMobile) {
+      const timer = setTimeout(() => {
+        setComponentsLoaded(true);
+      }, 500); // Small delay to ensure DOM elements are fully rendered
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, isMobile]);
+
+  // Handle scroll spy updates with reduced delay
+  useEffect(() => {
+    if (
+      activeSection &&
+      !isMobile &&
+      !isProgrammaticScroll &&
+      componentsLoaded
+    ) {
+      // Clear any existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Small delay to prevent rapid updates, but much shorter than before
+      scrollTimeoutRef.current = setTimeout(() => {
+        setActivePage(activeSection);
+      }, 50);
+    }
+
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [activeSection, isMobile, isProgrammaticScroll, componentsLoaded]);
+
+  // Loading timer
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
 
+  // Handle programmatic scrolling to sections
   useEffect(() => {
-    if (!isMobile && !isLoading && isScrolling) {
+    if (!isMobile && !isLoading && isProgrammaticScroll && componentsLoaded) {
       const sectionId = activePage.toLowerCase();
       const sectionElement = document.getElementById(sectionId);
       if (sectionElement) {
         sectionElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        const scrollEndTimer = setTimeout(() => {
-          setIsScrolling(false);
-        }, 1000);
-        return () => clearTimeout(scrollEndTimer);
+
+        // Reset programmatic scroll flag after animation completes
+        const resetTimer = setTimeout(() => {
+          setIsProgrammaticScroll(false);
+        }, 800);
+
+        return () => clearTimeout(resetTimer);
       }
     }
-  }, [activePage, isMobile, isLoading, isScrolling]);
+  }, [activePage, isMobile, isLoading, isProgrammaticScroll, componentsLoaded]);
 
   const handleNavClick = (pageName) => {
-    if (!isMobile) {
-      setIsScrolling(true);
+    const newIndex = navItems.findIndex((item) => item.name === pageName);
+    setDirection(newIndex > prevPageIndex.current ? 1 : -1);
+    prevPageIndex.current = newIndex;
+
+    // Clear any pending scroll spy updates
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
+
+    // Immediately update active page
     setActivePage(pageName);
+
+    if (!isMobile) {
+      setIsProgrammaticScroll(true);
+      // Ensure components are marked as loaded when user interacts
+      if (!componentsLoaded) {
+        setComponentsLoaded(true);
+      }
+    }
   };
 
   const renderExpandedContent = () => {
@@ -84,7 +169,7 @@ function App() {
                 darkMode ? "text-purple-400" : "text-purple-600"
               }`}
             >
-              — {author}
+              â€" {author}
             </p>
           </div>
         );
@@ -144,6 +229,10 @@ function App() {
         return (
           <NewsSection darkMode={darkMode} setExpandedCard={setExpandedCard} />
         );
+      case "Favorites":
+        return <Favorites darkMode={darkMode} />;
+      case "Journal":
+        return <Journal darkMode={darkMode} />;
       default:
         return <MindfulMinute darkMode={darkMode} />;
     }
@@ -155,9 +244,9 @@ function App() {
         darkMode ? "dark" : ""
       }`}
     >
-      <div className="relative">
+      <div className="relative overflow-x-hidden">
         <DynamicBackground darkMode={darkMode} />
-
+        <Analytics />
         <AnimatePresence>
           {isLoading ? (
             <Loader darkMode={darkMode} />
@@ -181,38 +270,62 @@ function App() {
                   darkMode={darkMode}
                 />
               )}
-
               <main className="pt-24 px-4 relative z-10">
-                {isMobile ? (
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={activePage}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {renderPage()}
-                    </motion.div>
-                  </AnimatePresence>
-                ) : (
-                  <>
-                    <MindfulMinute darkMode={darkMode} />
-                    <QuoteSection
-                      darkMode={darkMode}
-                      setExpandedCard={setExpandedCard}
-                    />
-                    <MoodTracker darkMode={darkMode} />
-                    <NewsSection
-                      darkMode={darkMode}
-                      setExpandedCard={setExpandedCard}
-                    />
-                  </>
-                )}
+                <Suspense
+                  fallback={
+                    <div className="h-screen flex items-center justify-center">
+                      Loading...
+                    </div>
+                  }
+                >
+                  {isMobile ? (
+                    <AnimatePresence initial={false} custom={direction}>
+                      <motion.div
+                        key={activePage}
+                        custom={direction}
+                        variants={pageVariants}
+                        initial="enter"
+                        animate="center"
+                        exit="exit"
+                        transition={{
+                          x: { type: "spring", stiffness: 300, damping: 30 },
+                          opacity: { duration: 0.2 },
+                        }}
+                      >
+                        {renderPage()}
+                      </motion.div>
+                    </AnimatePresence>
+                  ) : (
+                    <>
+                      <section id="mindful" className="min-h-screen">
+                        <MindfulMinute darkMode={darkMode} />
+                      </section>
+                      <section id="quotes" className="min-h-screen">
+                        <QuoteSection
+                          darkMode={darkMode}
+                          setExpandedCard={setExpandedCard}
+                        />
+                      </section>
+                      <section id="mood" className="min-h-screen">
+                        <MoodTracker darkMode={darkMode} />
+                      </section>
+                      <section id="news" className="min-h-screen">
+                        <NewsSection
+                          darkMode={darkMode}
+                          setExpandedCard={setExpandedCard}
+                        />
+                      </section>
+                      <section id="favorites" className="min-h-screen">
+                        <Favorites darkMode={darkMode} />
+                      </section>
+                      <section id="journal" className="min-h-screen">
+                        <Journal darkMode={darkMode} />
+                      </section>
+                    </>
+                  )}
+                </Suspense>
               </main>
-
               <Footer darkMode={darkMode} />
-
               {!isMobile && (
                 <motion.button
                   onClick={() =>
@@ -228,7 +341,6 @@ function App() {
                   <ChevronUp size={24} />
                 </motion.button>
               )}
-
               <AnimatePresence>
                 {expandedCard && (
                   <motion.div

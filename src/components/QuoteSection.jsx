@@ -1,42 +1,77 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Quote } from "lucide-react";
+import { Quote, Bookmark, Check } from "lucide-react";
 import { sampleQuotes } from "../constants/data";
-import useHapticFeedback from "../hooks/useHapticFeedback"; // 1. Import the hook
+import useHapticFeedback from "../hooks/useHapticFeedback";
+import useCachedFetch from "../hooks/useCachedFetch";
+import useLocalStorage from "../hooks/useLocalStorage"; // 1. Import the new hook
+import QuoteSkeleton from "./QuoteSkeleton";
 
 const QuoteSection = ({ darkMode, setExpandedCard }) => {
-  const triggerHapticFeedback = useHapticFeedback(); // 2. Initialize the hook
+  const triggerHapticFeedback = useHapticFeedback();
   const [currentQuote, setCurrentQuote] = useState(null);
-  const quoteIntervalRef = useRef(null);
+  const [isFavorited, setIsFavorited] = useState(false);
 
-  // Function to fetch a new quote from the new API
-  const fetchQuote = async () => {
-    try {
-      // *** NEW, MORE RELIABLE API ENDPOINT ***
-      const response = await fetch("https://dummyjson.com/quotes/random");
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.json();
-      // *** ADJUSTED TO MATCH NEW API's data structure (data.quote) ***
-      setCurrentQuote({ text: data.quote, author: data.author });
-    } catch (error) {
-      console.error("Failed to fetch quote:", error);
-      // Fallback to sample data remains the same
-      const randomQuote =
-        sampleQuotes[Math.floor(Math.random() * sampleQuotes.length)];
-      setCurrentQuote(randomQuote);
-    }
-  };
+  // 2. Initialize useLocalStorage to manage an array of favorite quotes
+  const [favoriteQuotes, setFavoriteQuotes] = useLocalStorage(
+    "favorite_quotes",
+    []
+  );
+
+  const {
+    data: quoteData,
+    error,
+    loading,
+    refetch,
+  } = useCachedFetch("https://dummyjson.com/quotes/random", "cached_quote", 2);
 
   useEffect(() => {
-    fetchQuote();
-    quoteIntervalRef.current = setInterval(fetchQuote, 120000); // Refresh every 2 minutes
-    return () => clearInterval(quoteIntervalRef.current);
-  }, []);
+    if (quoteData) {
+      const newQuote = {
+        text: quoteData.quote,
+        author: quoteData.author,
+        type: "quote",
+      };
+      setCurrentQuote(newQuote);
+      // Check if the newly fetched quote is already in favorites
+      setIsFavorited(favoriteQuotes.some((q) => q.text === newQuote.text));
+    } else if (error) {
+      const randomQuote =
+        sampleQuotes[Math.floor(Math.random() * sampleQuotes.length)];
+      setCurrentQuote({ ...randomQuote, type: "quote" });
+    }
+  }, [quoteData, error, favoriteQuotes]);
 
-  // 3. Create a handler function for the click event
+  useEffect(() => {
+    const intervalId = setInterval(() => refetch(), 120000);
+    return () => clearInterval(intervalId);
+  }, [refetch]);
+
   const handleCardClick = () => {
     triggerHapticFeedback();
     setExpandedCard({ type: "quote", data: currentQuote });
+  };
+
+  // 3. Update the handler to save the quote
+  const handleSaveFavorite = (e) => {
+    e.stopPropagation();
+    triggerHapticFeedback();
+
+    if (!currentQuote) return;
+
+    // Check if the quote is already favorited to prevent duplicates
+    const isAlreadyFavorited = favoriteQuotes.some(
+      (q) => q.text === currentQuote.text
+    );
+
+    if (!isAlreadyFavorited) {
+      const newFavorite = {
+        ...currentQuote,
+        savedAt: new Date().toISOString(),
+      };
+      setFavoriteQuotes((prevFavorites) => [...prevFavorites, newFavorite]);
+      setIsFavorited(true);
+    }
   };
 
   return (
@@ -53,12 +88,20 @@ const QuoteSection = ({ darkMode, setExpandedCard }) => {
             darkMode ? "text-white" : "text-slate-800"
           }`}
         >
-          <Quote className="inline mr-3" />
+          <Quote className="inline mr-2 text-green-500" />
           Quote of the Minute
         </h2>
         <div className="relative h-80 flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            {currentQuote && (
+          {loading && <QuoteSkeleton darkMode={darkMode} />}
+
+          {error && (
+            <div className="text-center text-red-500">
+              Could not load live data. Showing a sample quote.
+            </div>
+          )}
+
+          {!loading && currentQuote && (
+            <AnimatePresence mode="wait">
               <motion.div
                 key={currentQuote.text}
                 initial={{ opacity: 0, rotateY: 90 }}
@@ -66,13 +109,32 @@ const QuoteSection = ({ darkMode, setExpandedCard }) => {
                 exit={{ opacity: 0, rotateY: -90 }}
                 transition={{ duration: 0.6 }}
                 whileHover={{ scale: 1.02, y: -5 }}
-                onClick={handleCardClick} // 4. Use the new handler
+                onClick={handleCardClick}
                 className={`absolute w-full h-full rounded-3xl p-8 backdrop-blur-xl cursor-pointer ${
                   darkMode
                     ? "bg-gradient-to-br from-purple-900/40 to-blue-900/40 border-purple-700/50"
                     : "bg-gradient-to-br from-purple-100/60 to-blue-100/60 border-purple-200/50"
                 } border shadow-2xl`}
               >
+                {/* 4. Update the favorite button with visual feedback */}
+                <motion.button
+                  onClick={handleSaveFavorite}
+                  className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${
+                    isFavorited
+                      ? "bg-green-500"
+                      : "bg-black/20 hover:bg-black/40"
+                  }`}
+                  aria-label="Save favorite"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  {isFavorited ? (
+                    <Check size={20} className="text-white" />
+                  ) : (
+                    <Bookmark size={20} className="text-white" />
+                  )}
+                </motion.button>
+
                 <div className="h-full flex flex-col justify-center text-center">
                   <p
                     className={`text-2xl font-light italic mb-6 ${
@@ -90,8 +152,8 @@ const QuoteSection = ({ darkMode, setExpandedCard }) => {
                   </p>
                 </div>
               </motion.div>
-            )}
-          </AnimatePresence>
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </motion.section>
