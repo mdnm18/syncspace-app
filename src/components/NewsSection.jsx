@@ -85,7 +85,7 @@ const NewsSection = ({ darkMode, setExpandedCard }) => {
             darkMode ? "text-white" : "text-slate-800"
           }`}
         >
-          <Newspaper className="inline mr-2 text-purple-500" />
+          <Newspaper className="inline mr-2 text-blue-500" />
           Tech News
         </h2>
 

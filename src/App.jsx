@@ -169,7 +169,7 @@ function App() {
                 darkMode ? "text-purple-400" : "text-purple-600"
               }`}
             >
-              â€" {author}
+              — {author}
             </p>
           </div>
         );
@@ -270,7 +270,13 @@ function App() {
                   darkMode={darkMode}
                 />
               )}
-              <main className="pt-24 px-4 relative z-10">
+
+              {/* FIXED: Mobile and Desktop rendering */}
+              <main
+                className={`pt-24 px-4 relative z-10 ${
+                  isMobile ? "pb-24" : ""
+                }`}
+              >
                 <Suspense
                   fallback={
                     <div className="h-screen flex items-center justify-center">
@@ -279,23 +285,32 @@ function App() {
                   }
                 >
                   {isMobile ? (
-                    <AnimatePresence initial={false} custom={direction}>
-                      <motion.div
-                        key={activePage}
+                    // Mobile: Show only active page with animations
+                    <div className="relative w-full min-h-screen overflow-hidden">
+                      <AnimatePresence
+                        initial={false}
                         custom={direction}
-                        variants={pageVariants}
-                        initial="enter"
-                        animate="center"
-                        exit="exit"
-                        transition={{
-                          x: { type: "spring", stiffness: 300, damping: 30 },
-                          opacity: { duration: 0.2 },
-                        }}
+                        mode="wait"
                       >
-                        {renderPage()}
-                      </motion.div>
-                    </AnimatePresence>
+                        <motion.div
+                          key={activePage}
+                          custom={direction}
+                          variants={pageVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{
+                            x: { type: "spring", stiffness: 300, damping: 30 },
+                            opacity: { duration: 0.2 },
+                          }}
+                          className="absolute inset-0 w-full"
+                        >
+                          <div className="w-full">{renderPage()}</div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
                   ) : (
+                    // Desktop: All sections stacked vertically
                     <>
                       <section id="mindful" className="min-h-screen">
                         <MindfulMinute darkMode={darkMode} />
@@ -325,7 +340,9 @@ function App() {
                   )}
                 </Suspense>
               </main>
+
               <Footer darkMode={darkMode} />
+
               {!isMobile && (
                 <motion.button
                   onClick={() =>
@@ -341,6 +358,7 @@ function App() {
                   <ChevronUp size={24} />
                 </motion.button>
               )}
+
               <AnimatePresence>
                 {expandedCard && (
                   <motion.div
